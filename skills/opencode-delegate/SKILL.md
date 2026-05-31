@@ -1,6 +1,6 @@
 ---
 name: opencode-delegate
-description: Delegate large codebase analysis and multi-file code modification tasks to a running opencode serve HTTP server. Use when the user asks for broad refactoring, large bug fixes, repository-wide edits, complex codebase investigation, or edit-test-review loops that should be handled by opencode as a subordinate coding agent.
+description: Delegate large codebase analysis and multi-file code modification tasks to a running opencode serve HTTP server. Use proactively when the user asks for broad refactoring, large bug fixes, repository-wide edits, complex codebase investigation, cross-module behavior changes, failing test investigation, or edit-test-review loops that should be handled by opencode as a subordinate coding agent. Also use when the user explicitly says to use opencode, delegate to opencode, use a subordinate coding agent, run an edit-test-review loop, inspect the whole repo, fix this across the codebase, or make a large multi-file change.
 ---
 
 # opencode Delegate
@@ -49,7 +49,27 @@ If `OPENCODE_SERVER_PASSWORD` is set, use HTTP Basic Auth.
 
 Use this skill when the task involves large repository context, multi-file edits, repository-wide refactoring, complex bug investigation, repeated edit and validation cycles, or a coding task where opencode should inspect the project, modify files, run tests, and return a diff.
 
-Do not use this skill for small direct edits that Claude Code can safely perform itself.
+Use it proactively when the user request includes signals such as:
+
+* "use opencode", "delegate to opencode", "ask opencode", or "subordinate agent".
+* "whole repo", "entire codebase", "across the project", "repository-wide", or "cross-module".
+* "large refactor", "multi-file change", "broad fix", "many files", or "rename everywhere".
+* "investigate this bug", "find the root cause", "fix failing tests", or "edit-test-review".
+* A task that likely needs opencode to inspect unfamiliar areas, change several modules, run validation, and summarize a diff.
+
+Examples that should use this skill:
+
+* Refactor an API or data model across frontend, backend, tests, and docs.
+* Investigate and fix a bug whose location is not known.
+* Update a feature that spans routing, persistence, validation, and UI.
+* Run a repository-wide cleanup where tests must be run after edits.
+
+Do not use this skill when:
+
+* The request is a small direct edit in one known file.
+* The task is a simple explanation, code review, search, or read-only inspection that Claude Code can do directly.
+* The user asks not to use delegation, asks to avoid opencode, or wants only a plan.
+* The opencode server is not running and the task is small enough to complete safely without it.
 
 ## Workflow
 
