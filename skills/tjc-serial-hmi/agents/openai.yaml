@@ -1,0 +1,4 @@
+interface:
+  display_name: "淘晶驰串口屏"
+  short_description: "为 STM32 等 MCU 生成并审查淘晶驰串口屏串口通讯代码"
+  default_prompt: "基于官方文档生成、修复或审查淘晶驰串口屏与 STM32 等 MCU 的串口通讯代码。"
