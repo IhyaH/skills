@@ -1,23 +1,17 @@
 ---
-
 name: opencode-delegate
 description: Delegate large codebase analysis and multi-file code modification tasks to a running opencode serve HTTP server. Use when the user asks for broad refactoring, large bug fixes, repository-wide edits, complex codebase investigation, or edit-test-review loops that should be handled by opencode as a subordinate coding agent.
-compatibility: Designed for Claude Code. Requires shell access, Python 3, network access to a local opencode serve endpoint, and a running opencode server.
-allowed-tools: Bash Read Grep Glob
-metadata:
-version: "1.0"
-target: "opencode serve"
-------------------------
+---
 
 # opencode Delegate
 
 Use this skill to delegate large coding tasks to a local `opencode serve` HTTP server.
 
-The current Claude Code session remains responsible for understanding the user request, preparing a precise task brief, reviewing opencode's result, and reporting the final outcome. opencode is only used as a subordinate coding agent.
+Claude Code remains the controller. It prepares the task brief, sends it to opencode, reviews the result, checks the working tree, and reports the final outcome. opencode is used only as a subordinate coding agent.
 
 ## Requirements
 
-Before using this skill, confirm that an opencode server is running.
+An opencode server must already be running from the repository that should be inspected or modified.
 
 Default endpoint:
 
@@ -25,7 +19,7 @@ Default endpoint:
 http://127.0.0.1:4096
 ```
 
-Recommended startup command:
+Recommended startup command, run from the target repository root:
 
 ```bash
 OPENCODE_SERVER_PASSWORD="your-password" \
@@ -36,7 +30,7 @@ Use localhost unless the user explicitly configured a secure remote endpoint.
 
 ## Environment variables
 
-Use these values when present:
+Use these variables when available:
 
 ```bash
 OPENCODE_BASE_URL="${OPENCODE_BASE_URL:-http://127.0.0.1:4096}"
@@ -44,33 +38,48 @@ OPENCODE_SERVER_USERNAME="${OPENCODE_SERVER_USERNAME:-opencode}"
 OPENCODE_SERVER_PASSWORD="${OPENCODE_SERVER_PASSWORD:-}"
 OPENCODE_PROVIDER_ID="${OPENCODE_PROVIDER_ID:-}"
 OPENCODE_MODEL_ID="${OPENCODE_MODEL_ID:-}"
+OPENCODE_AGENT="${OPENCODE_AGENT:-}"
 ```
 
 If `OPENCODE_SERVER_PASSWORD` is set, use HTTP Basic Auth.
 
 ## When to use
 
-Use this skill when the task involves one or more of the following:
-
-* Large repository context.
-* Multi-file edits.
-* Repository-wide refactoring.
-* Complex bug investigation.
-* Repeated edit and validation cycles.
-* Tasks where opencode should inspect the project, modify files, run tests, and return a diff.
+Use this skill when the task involves large repository context, multi-file edits, repository-wide refactoring, complex bug investigation, repeated edit and validation cycles, or a coding task where opencode should inspect the project, modify files, run tests, and return a diff.
 
 Do not use this skill for small direct edits that Claude Code can safely perform itself.
 
 ## Workflow
 
 1. Inspect the user request and current repository state.
-2. Prepare a compact task brief for opencode.
-3. Run the helper script in `scripts/opencode_delegate.py`.
-4. Review the returned summary, changed files, diff, and validation output.
-5. Inspect the actual working tree with `git diff` and relevant file reads.
-6. Report the final result to the user.
+2. Confirm the repository is clean enough for delegated edits with `git status --short`.
+3. Prepare a compact task brief for opencode.
+4. Run the helper script at `scripts/opencode_delegate.py`.
+5. Review the returned summary, changed files, diff, and validation output.
+6. Inspect the actual working tree with `git status` and `git diff`.
+7. Report the final result to the user.
 
 Do not blindly accept opencode output.
+
+## Locating the helper script
+
+For a project-level skill, the helper script is usually here:
+
+```bash
+.claude/skills/opencode-delegate/scripts/opencode_delegate.py
+```
+
+For a user-level skill, the helper script is usually here:
+
+```bash
+~/.claude/skills/opencode-delegate/scripts/opencode_delegate.py
+```
+
+If unsure, locate it with:
+
+```bash
+SCRIPT_PATH="$(find .claude/skills ~/.claude/skills -path '*/opencode-delegate/scripts/opencode_delegate.py' -type f 2>/dev/null | head -n 1)"
+```
 
 ## Task brief format
 
@@ -104,10 +113,11 @@ Expected output:
 
 ## Helper script usage
 
-Run:
+Run this command from the repository root:
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/scripts/opencode_delegate.py" "$(cat <<'TASK'
+SCRIPT_PATH="$(find .claude/skills ~/.claude/skills -path '*/opencode-delegate/scripts/opencode_delegate.py' -type f 2>/dev/null | head -n 1)"
+python3 "$SCRIPT_PATH" "$(cat <<'TASK'
 You are operating as a subordinate coding agent.
 
 Goal:
@@ -137,7 +147,7 @@ TASK
 
 ## Review requirements
 
-After opencode completes, always check:
+After opencode completes, always run:
 
 ```bash
 git status --short
