@@ -39,6 +39,8 @@ OPENCODE_SERVER_PASSWORD="${OPENCODE_SERVER_PASSWORD:-}"
 OPENCODE_PROVIDER_ID="${OPENCODE_PROVIDER_ID:-}"
 OPENCODE_MODEL_ID="${OPENCODE_MODEL_ID:-}"
 OPENCODE_AGENT="${OPENCODE_AGENT:-}"
+OPENCODE_DIRECTORY="${OPENCODE_DIRECTORY:-$(pwd)}"
+OPENCODE_NO_REPLY="${OPENCODE_NO_REPLY:-}"
 ```
 
 If `OPENCODE_SERVER_PASSWORD` is set, use HTTP Basic Auth.
@@ -113,7 +115,9 @@ Expected output:
 
 ## Helper script usage
 
-Run this command from the repository root:
+Run this command from the repository root. The helper sends the current working directory to opencode as the target `directory`; set `OPENCODE_DIRECTORY` if the target repository is somewhere else.
+
+For an HTTP smoke test that does not wait for a model response, set `OPENCODE_NO_REPLY=true`.
 
 ```bash
 SCRIPT_PATH="$(find .claude/skills ~/.claude/skills -path '*/opencode-delegate/scripts/opencode_delegate.py' -type f 2>/dev/null | head -n 1)"

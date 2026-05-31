@@ -12,6 +12,8 @@ Environment variables:
     OPENCODE_PROVIDER_ID           Optional. Used with OPENCODE_MODEL_ID.
     OPENCODE_MODEL_ID              Optional. Used with OPENCODE_PROVIDER_ID.
     OPENCODE_AGENT                 Optional. Agent name to pass to opencode.
+    OPENCODE_DIRECTORY             Default: current working directory.
+    OPENCODE_NO_REPLY              Optional. true/1/yes/on sends a no-reply smoke prompt.
     OPENCODE_TIMEOUT_SECONDS       Default: 1800
     OPENCODE_OUTPUT_LIMIT          Default: 30000
 """
@@ -35,6 +37,8 @@ PASSWORD = os.environ.get("OPENCODE_SERVER_PASSWORD", "")
 PROVIDER_ID = os.environ.get("OPENCODE_PROVIDER_ID", "")
 MODEL_ID = os.environ.get("OPENCODE_MODEL_ID", "")
 AGENT = os.environ.get("OPENCODE_AGENT", "")
+DIRECTORY = os.environ.get("OPENCODE_DIRECTORY", os.getcwd())
+NO_REPLY = os.environ.get("OPENCODE_NO_REPLY", "").lower() in {"1", "true", "yes", "on"}
 TIMEOUT_SECONDS = int(os.environ.get("OPENCODE_TIMEOUT_SECONDS", "1800"))
 OUTPUT_LIMIT = int(os.environ.get("OPENCODE_OUTPUT_LIMIT", "30000"))
 
@@ -88,6 +92,15 @@ def request(method: str, path: str, body: Optional[Dict[str, Any]] = None, timeo
         ) from exc
 
 
+def with_query(path: str, params: Dict[str, str]) -> str:
+    query = urllib.parse.urlencode({key: value for key, value in params.items() if value})
+    if not query:
+        return path
+
+    separator = "&" if "?" in path else "?"
+    return f"{path}{separator}{query}"
+
+
 def compact_json(value: Any, limit: int = OUTPUT_LIMIT) -> str:
     text = json.dumps(value, ensure_ascii=False, indent=2)
     if len(text) <= limit:
@@ -105,9 +118,14 @@ def extract_session_id(session_response: Any) -> str:
     raise RuntimeError(f"Unexpected session response:\n{compact_json(session_response)}")
 
 
-def extract_text_parts(message_response: Any) -> str:
+def extract_text_parts(message_response: Any, expected_role: Optional[str] = None) -> str:
     if not isinstance(message_response, dict):
         return ""
+
+    if expected_role:
+        info = message_response.get("info", {})
+        if not isinstance(info, dict) or info.get("role") != expected_role:
+            return ""
 
     parts = message_response.get("parts", [])
     if not isinstance(parts, list):
@@ -142,6 +160,9 @@ def build_message_body(task_brief: str) -> Dict[str, Any]:
     if AGENT:
         body["agent"] = AGENT
 
+    if NO_REPLY:
+        body["noReply"] = True
+
     return body
 
 
@@ -167,14 +188,15 @@ def main() -> int:
 
     health = safe_get("/global/health", timeout=30)
 
-    session = request("POST", "/session", {"title": "delegated coding task"}, timeout=60)
+    session_path = with_query("/session", {"directory": DIRECTORY})
+    session = request("POST", session_path, {"title": "delegated coding task"}, timeout=60)
     session_id = extract_session_id(session)
     encoded_session_id = urllib.parse.quote(session_id, safe="")
 
     started_at = time.time()
     message = request(
         "POST",
-        f"/session/{encoded_session_id}/message",
+        with_query(f"/session/{encoded_session_id}/message", {"directory": DIRECTORY}),
         build_message_body(task_brief),
         timeout=TIMEOUT_SECONDS,
     )
@@ -186,10 +208,12 @@ def main() -> int:
 
     result = {
         "base_url": BASE_URL,
+        "directory": DIRECTORY,
+        "no_reply": NO_REPLY,
         "health": health,
         "session_id": session_id,
         "elapsed_seconds": elapsed,
-        "assistant_text": extract_text_parts(message),
+        "assistant_text": extract_text_parts(message, expected_role="assistant"),
         "message_response": message,
         "todo": todo,
         "diff": diff,

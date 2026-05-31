@@ -55,7 +55,11 @@ OPENCODE_SERVER_USERNAME=opencode
 OPENCODE_SERVER_PASSWORD=your-password
 OPENCODE_PROVIDER_ID=...
 OPENCODE_MODEL_ID=...
+OPENCODE_DIRECTORY=C:\Users\<you>\Documents\GitHub\skills
+OPENCODE_NO_REPLY=true
 ```
+
+其中 `OPENCODE_NO_REPLY=true` 适合做 HTTP 烟测：它会验证 helper 能创建会话并发送消息，但不会等待模型回复。
 
 更多任务说明模板、审查要求和安全规则见 `skills/opencode-delegate/SKILL.md`。
 
