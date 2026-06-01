@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenCode Subagent"
+  short_description: "将 opencode server 作为子代理调用。"
+  default_prompt: "使用 opencode server 启动、连接或调用 OpenCode 子代理来辅助完成主代理任务。"

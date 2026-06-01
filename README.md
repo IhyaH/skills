@@ -7,10 +7,6 @@
 ```text
 .
 |-- skills/
-|   |-- opencode-delegate/
-|   |   |-- SKILL.md
-|   |   `-- scripts/
-|   |       `-- opencode_delegate.py
 |   `-- tjc-serial-hmi/
 |       |-- SKILL.md
 |       |-- agents/
@@ -38,7 +34,6 @@
 
 | Skill | 用途 | 入口 |
 | --- | --- | --- |
-| `opencode-delegate` | 将大型代码库分析、多文件修改、复杂排障和改测审循环委派给本地运行的 `opencode serve`。当前会话仍负责理解需求、整理任务说明、审查结果并向用户汇报。 | `skills/opencode-delegate/SKILL.md` |
 | `tjc-serial-hmi` | 为淘晶驰串口屏生成、审查和修复 MCU 串口通讯代码，重点覆盖 STM32/HAL/LL/裸机场景下的页面切换、控件赋值、字符串收发、触摸事件解析、返回帧解析、接线排障，以及控件属性与系统变量的文档化约束。 | `skills/tjc-serial-hmi/SKILL.md` |
 
 ## 使用方式
@@ -51,37 +46,7 @@
 git clone <repo-url> C:\Users\<you>\Documents\GitHub\skills
 ```
 
-如果目标工具支持按目录加载 skills，可以直接指向本仓库的 `skills/` 目录；如果需要复制安装，则复制单个 skill 目录，例如 `skills/opencode-delegate` 或 `skills/tjc-serial-hmi`。
-
-### 使用 `opencode-delegate`
-
-该 skill 需要本地先启动 `opencode serve`：
-
-```bash
-OPENCODE_SERVER_PASSWORD="your-password" opencode serve --hostname 127.0.0.1 --port 4096
-```
-
-默认端点为：
-
-```text
-http://127.0.0.1:4096
-```
-
-可通过环境变量覆盖连接和模型配置：
-
-```bash
-OPENCODE_BASE_URL=http://127.0.0.1:4096
-OPENCODE_SERVER_USERNAME=opencode
-OPENCODE_SERVER_PASSWORD=your-password
-OPENCODE_PROVIDER_ID=...
-OPENCODE_MODEL_ID=...
-OPENCODE_DIRECTORY=C:\Users\<you>\Documents\GitHub\skills
-OPENCODE_NO_REPLY=true
-```
-
-其中 `OPENCODE_NO_REPLY=true` 适合做 HTTP 烟测：它会验证 helper 能创建会话并发送消息，但不会等待模型回复。
-
-更多任务说明模板、审查要求和安全规则见 `skills/opencode-delegate/SKILL.md`。
+如果目标工具支持按目录加载 skills，可以直接指向本仓库的 `skills/` 目录；如果需要复制安装，则复制单个 skill 目录，例如 `skills/tjc-serial-hmi`。
 
 ### 使用 `tjc-serial-hmi`
 
