@@ -1,4 +1,4 @@
-interface:
+ï»¿interface:
   display_name: "OpenCode Subagent"
-  short_description: "½« opencode server ×÷Îª×Ó´úÀíµ÷ÓÃ¡£"
-  default_prompt: "Ê¹ÓÃ opencode server Æô¶¯¡¢Á¬½Ó»òµ÷ÓÃ OpenCode ×Ó´úÀíÀ´¸¨ÖúÍê³ÉÖ÷´úÀíÈÎÎñ¡£"
+  short_description: "é«˜æ•ˆè°ƒç”¨ opencode server æ‰§è¡Œå­ä»£ç†ä»»åŠ¡ã€‚"
+  default_prompt: "æ£€æŸ¥æˆ–å¯åŠ¨ opencode serverï¼Œåˆ›å»ºç‹¬ç«‹ sessionï¼Œå‘é€ä¸€ä¸ªè¾¹ç•Œæ¸…æ™°çš„å­ä»»åŠ¡ promptï¼Œå¹¶åœ¨ä½¿ç”¨ç»“æœå‰å®¡æŸ¥è¾“å‡ºå’Œæ–‡ä»¶å˜åŒ–ã€‚"

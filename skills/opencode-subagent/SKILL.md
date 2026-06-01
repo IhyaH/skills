@@ -1,74 +1,104 @@
 ---
 name: opencode-subagent
-description: Use when Codex needs to run, connect to, or orchestrate opencode as an HTTP server/subagent for delegation, parallel coding assistance, repository analysis, file search, shell execution, session/message management, or OpenAPI-driven automation via `opencode serve`.
+description: Use when Codex should delegate work to opencode running as a headless HTTP subagent via `opencode serve`, especially for independent repository analysis, parallel implementation, file search, command execution, second-pass review, or OpenAPI-driven session/message automation.
 ---
 
 # OpenCode Subagent
 
-## Purpose
+## Fast Path
 
-Use `opencode serve` to expose opencode as a headless HTTP server that another agent can control. Treat it as a subordinate coding agent: start or discover the server, create a session, send a bounded task prompt, collect messages/events/results, and reconcile any file changes with the main agent's workspace rules.
+Use this sequence before reading deeper references:
 
-Read [references/server-api.md](references/server-api.md) when you need endpoint details, authentication, CORS, or the API capability map.
+1. Check for a live server at `http://127.0.0.1:4096/doc`.
+2. If absent, start one with `opencode serve` from the target repository or explicitly pass the intended working directory in the delegated prompt.
+3. Fetch `/doc` from the live server for exact endpoint schemas.
+4. Create one session per delegated task.
+5. Send a narrow prompt using the template below.
+6. Monitor messages or events until completion.
+7. Review the subagent output and file changes before using them.
 
-## Workflow
+Read [references/server-api.md](references/server-api.md) only when you need server flags, authentication, CORS, or the endpoint capability map.
 
-1. Confirm whether an opencode server is already running.
-   - Try the expected health endpoint or OpenAPI document URL.
-   - Default base URL: `http://127.0.0.1:4096`.
-   - OpenAPI document: `GET /doc`.
-2. Start the server only when needed.
-   - Basic local server: `opencode serve`.
-   - Custom port/host: `opencode serve --port <port> --hostname <host>`.
-   - Browser callers may need repeated `--cors <origin>` flags.
-3. Add authentication when exposing beyond trusted localhost.
-   - Set `OPENCODE_SERVER_PASSWORD`.
-   - Optional username override: `OPENCODE_SERVER_USERNAME`.
-   - Default username is `opencode`.
-4. Create or select an opencode session for the delegated task.
-5. Send a narrow, self-contained prompt that states:
-   - the exact objective,
-   - the working directory or relevant paths,
-   - constraints from the main task,
-   - expected output format,
-   - whether file edits, shell commands, or only analysis are allowed.
-6. Monitor the task through message responses or server-sent events.
-7. Inspect outputs and changed files before trusting them.
-   - The main Codex agent remains responsible for validation, tests, git hygiene, and final user communication.
+## When To Delegate
 
-## Delegation Pattern
+Good delegation targets:
 
-Use opencode as a subagent for work that benefits from an independent pass:
+- Independent codebase reconnaissance.
+- A second implementation attempt for comparison.
+- Focused file search or API tracing.
+- Test failure investigation.
+- Review of a bounded diff.
+- Long-running analysis that can proceed while the main agent works.
+
+Keep in the main agent:
+
+- Final user-facing answer.
+- Git commits, pushes, PRs, and destructive operations.
+- Secret handling or credential setup.
+- Broad product/design judgment.
+- Final validation and reconciliation of edits.
+
+## Server Setup
+
+Default base URL: `http://127.0.0.1:4096`
+
+Default document URL:
 
 ```text
-You are a subagent assisting the main coding agent.
-Task: <specific task>
-Repository: <absolute path>
-Constraints: <tests, style, no unrelated refactors, etc.>
-Allowed actions: <analysis only | edit files | run tests>
-Return: <summary, changed files, commands run, risks>
+http://127.0.0.1:4096/doc
 ```
 
-Keep prompts small and explicit. Do not ask the subagent to own broad project direction, user communication, credentials, git commits, pushes, or destructive operations unless the user explicitly requested that delegation.
+Start command:
 
-## Practical API Use
+```bash
+opencode serve
+```
 
-Prefer generated clients or direct HTTP calls from the OpenAPI spec at `/doc` when building integrations. For ad hoc agent orchestration, use these groups first:
+If binding outside localhost, require Basic Auth with `OPENCODE_SERVER_PASSWORD` and prefer a narrow hostname. See the reference file for details.
 
-- Sessions: create, update, fork, share, revert, summarize, abort, and delete task contexts.
-- Messages: send prompts, run async prompts, execute slash commands, or request shell command execution.
-- Files: search text, find files, read file contents, and inspect file status.
-- Config/providers/agents: discover models, providers, authentication state, and available agents.
-- Events: subscribe to server or session event streams for long-running work.
+## Delegation Prompt Template
 
-If endpoint shapes are uncertain, fetch `/doc` from the live server instead of relying on memory; opencode's API may change.
+Use this template verbatim unless the task needs extra constraints:
 
-## Safety Rules
+```text
+You are an opencode subagent assisting the main Codex agent.
 
-- Prefer localhost binding unless there is a clear need for remote access.
-- Require Basic Auth before binding to non-local interfaces.
-- Never pass secrets to opencode unless the user has authorized that use.
-- Treat subagent edits as untrusted until reviewed.
-- Preserve user changes and follow the main agent's repository instructions when merging results.
-- Avoid delegating irreversible filesystem, git, network, or production actions.
+Task: <one bounded objective>
+Repository: <absolute repository path>
+Relevant paths: <files/directories or "discover as needed">
+Allowed actions: <analysis only | edit files | run tests | run read-only commands>
+Constraints:
+- Preserve unrelated user changes.
+- Avoid broad refactors unless necessary for the task.
+- Do not commit, push, delete unrelated files, or handle secrets.
+- Prefer existing project patterns.
+
+Return:
+- Summary of findings or changes.
+- Files changed, if any.
+- Commands run and results.
+- Remaining risks or tests not run.
+```
+
+## API Usage Heuristic
+
+Fetch the live OpenAPI spec from `/doc` whenever endpoint shapes matter. Use these API groups first:
+
+- `session`: create or manage the task context.
+- `message`: send the prompt, async prompt, slash command, or shell-command request.
+- `event`: stream progress for long tasks.
+- `file`: search, read, and inspect file status.
+- `config`, `provider`, `agent`: discover available models/providers/agents.
+
+Prefer one small delegation over one vague large delegation. If the subagent edits files, inspect the diff and run the relevant validation yourself.
+
+## Completion Checklist
+
+Before trusting a subagent result:
+
+- Confirm the task objective was actually answered.
+- Check changed files with the main agent's normal tools.
+- Run or record relevant tests.
+- Merge only useful changes into the main line of work.
+- Mention subagent uncertainty in the final answer only when it affects the user.
 

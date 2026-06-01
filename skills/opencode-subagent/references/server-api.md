@@ -1,9 +1,11 @@
-# opencode Server API Reference
+# opencode Server Reference
 
 Source document: https://opencode.ai/docs/zh-cn/server/
 Last observed update on source page: 2026-05-31.
 
-## Start server
+Use this file as a lookup table after the main skill's Fast Path. Prefer the live OpenAPI document at `/doc` for exact endpoint schemas.
+
+## Server flags
 
 ```bash
 opencode serve [--port <number>] [--hostname <string>] [--cors <origin>]
@@ -16,7 +18,7 @@ Defaults:
 - OpenAPI document: `http://<hostname>:<port>/doc`
 - Local OpenAPI document: `http://localhost:4096/doc`
 
-Use repeated `--cors <origin>` flags to allow multiple browser origins.
+Use repeated `--cors <origin>` flags to allow multiple browser origins. Avoid CORS unless a browser-based caller needs it.
 
 ## Authentication
 
@@ -31,13 +33,13 @@ OPENCODE_SERVER_PASSWORD=your-password opencode serve
 
 Use authentication before exposing the server on non-localhost interfaces.
 
-## Architecture
+## Runtime model
 
 Running `opencode` normally starts both a TUI client and a server. The TUI talks to the server. Running `opencode serve` starts the server without the TUI, which is the preferred mode for subagent orchestration.
 
 The server exposes an OpenAPI 3.1 specification at `/doc`. For client generation or exact request/response schemas, fetch `/doc` from the running server.
 
-## Capability map
+## Endpoint groups
 
 Use this map to decide which API area to inspect in the live OpenAPI document.
 
@@ -116,12 +118,12 @@ Use this map to decide which API area to inspect in the live OpenAPI document.
 - Subscribe to server events.
 - Read OpenAPI docs from `GET /doc`.
 
-## Subagent orchestration notes
+## Efficient orchestration
 
 - Prefer one opencode session per delegated task.
+- Keep delegated prompts under one screen when possible.
 - Include absolute repository paths in prompts.
 - Ask the subagent to report changed files and commands run.
 - Use file status/search/read endpoints to inspect results before accepting them.
 - Use event streams for long-running prompts; otherwise poll message/session state according to the live API schema.
 - Keep the main agent responsible for final validation and user-facing conclusions.
-
